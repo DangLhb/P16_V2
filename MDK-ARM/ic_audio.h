@@ -25,4 +25,7 @@ void Handle_Play_Button_Event(void);
 void Handle_Back_Button_Event(void);
 uint32_t stt_play_to_time_record (uint32_t stt_play_t);
 void convert_pin_control_to_time_record(uint32_t pin_control_t);
+uint32_t read_switch_mode(void);
+void set_record_to_play(uint32_t switch_mode);
+void set_record_to_record(uint32_t switch_mode);
 #endif
