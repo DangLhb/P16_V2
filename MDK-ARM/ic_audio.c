@@ -14,7 +14,7 @@ extern uint8_t timer_interupt;
 extern uint16_t time_default, time_standy;
 extern uint8_t is_reset;
 extern uint8_t lock_interupt;
-extern uint32_t pin_control, stt_play, full_record;
+extern uint32_t pin_control, stt_play;
 uint8_t g_random_count = 0;
 uint8_t c_random_cacula[100] = {3,2,1,5,1,1,4,2,5,2,4,1,1,2,3,2,4,3,5,1,4,2,
 	3,5,1,2,3,1,4,3,2,1,5,1,1,4,2,5,2,4,1,1,2,5,1,2,3,1,4,3,2,1,2,3,2,4,3,5,1,4,2};
@@ -147,29 +147,25 @@ void Stop_record(void)
 			//uint32_t read =0;
 			Convert_pin_control_or_stt_play_to_pin(pin_control,1);
 			convert_pin_control_to_time_record(pin_control);
-			stt_play = pin_control + 1;
-			if(stt_play == 5)
-			{
+			//stt_play = pin_control + 1;
+			//if(stt_play == 5)
+			//{
 				//stt_play = 1;
-				full_record =1;
-			}
-			HAL_UART_Transmit(&huart1, (uint8_t *)"Check_log", 9, HAL_MAX_DELAY);		
-			pin_control +=1;
-			if(pin_control == 5)
-				pin_control = 0;
+				//full_record =1;
+			//}
+			//pin_control +=1;
+			//if(pin_control == 5)
+				//pin_control = 0;
 			
 			status = STOPRECORD;
 			time_default =0;
 			time_standy = 0;
-			HAL_Delay(10);		
-			write_flash(&pin_control, PIN_CONTROL_T, (sizeof(pin_control)/4));
-			HAL_Delay(10);
-			write_flash(&full_record, FULL_RECORD, (sizeof(full_record)/4));
-			HAL_Delay(10);
-			write_flash(&stt_play, STT_PLAY_T, (sizeof(stt_play)/4));
-			char msg[80];
-			sprintf(msg, "\n stt_play = %d, pin_control =%d, full_record = %d",stt_play,pin_control,full_record);
-			HAL_UART_Transmit(&huart1, (uint8_t *)msg, strlen(msg), HAL_MAX_DELAY);
+			//HAL_Delay(10);		
+			//write_flash(&pin_control, PIN_CONTROL_T, (sizeof(pin_control)/4));
+			//HAL_Delay(10);
+			//write_flash(&full_record, FULL_RECORD, (sizeof(full_record)/4));
+			//HAL_Delay(10);
+			//write_flash(&stt_play, STT_PLAY_T, (sizeof(stt_play)/4));
 }
 
 //ham start play
@@ -177,6 +173,11 @@ void Start_play(void)
 {
 	HAL_UART_Transmit(&huart1, (uint8_t *)"Enter Start_play - REC =1     ", 30, HAL_MAX_DELAY);
 	set_record_to_play(read_switch_mode());		//set stt_play
+	if(stt_play == 0)
+	{
+		status = NONE;
+		return;
+	}
 	HAL_GPIO_WritePin(GPIOA,GPIO_PIN_1, GPIO_PIN_SET);	// REC = 1
 	HAL_Delay(100);
 	Convert_pin_control_or_stt_play_to_pin(stt_play - 1,0);
@@ -225,6 +226,7 @@ uint32_t read_switch_mode(void)
 void set_record_to_play(uint32_t switch_mode)
 {
 	//char msg[59];
+	uint16_t is_list_empty = 1;
 	switch(switch_mode)
 	{
 		case 1:
@@ -245,11 +247,25 @@ void set_record_to_play(uint32_t switch_mode)
 		case 6:
 		// Neu o mode random thì sao? thì stt play se bang so random, . 
 		//Van de la phai biet da ghi am duoc ban nao de random vao nhung ban da ghi am.Khi play thi se kiem tra time record cua no co > 0 k?, neu k thi tu chuyen ban ghi am khac.
+		for(int i = 1; i < 6; i++)
+		{
+			if(stt_play_to_time_record(i) != 0)
+			{
+				is_list_empty = 0;
+			}
+		}
+		if(!is_list_empty)
+		{
 			do 
 			{
 				stt_play = c_random_cacula[g_random_count];
+				g_random_count +=1;
+				if(g_random_count > 58)
+					g_random_count = 0;
 			}
 			while(stt_play_to_time_record(stt_play) == 0);	// check time_record de xem co ton tai ban ghi am hay k? Neu k thi thuc hien set lait stt play
+		}
+		else stt_play = 0;
 		break;
 		case 7:
 			// khong doc duoc trang thai cua switch

@@ -30,9 +30,6 @@ extern TIM_HandleTypeDef htim2;
 extern TIM_HandleTypeDef htim3;
 extern uint8_t interupt_timer_3;
 extern uint8_t timer_standby;
-uint8_t g_random_count = 0;
-uint8_t c_random_cacula[100] = {3,2,1,5,1,1,4,2,5,2,4,1,1,2,3,2,4,3,5,1,4,2,
-	3,5,1,2,3,1,4,3,2,1,5,1,1,4,2,5,2,4,1,1,2,5,1,2,3,1,4,3,2,1,2,3,2,4,3,5,1,4,2};
 
 void handel_no_event(void)
 {
@@ -221,17 +218,6 @@ void Handle_Play_Button_Event(void)
 		{
 			HAL_UART_Transmit(&huart1, (uint8_t *)"Handle_Play_Button_Event - enter Stop_record      ", 50, HAL_MAX_DELAY);			
 			Stop_record();
-		}
-		//HAL_Delay(10);
-		if(stt_play == 0)
-		{
-			HAL_UART_Transmit(&huart1, (uint8_t *)"Handle_Play_Button_Event - stt_play = 0           ", 50, HAL_MAX_DELAY);
-			//play_press = 0;
-			time_default = 0;
-			time_standy = 0;
-			HAL_Delay(1000);
-			event_interupt = NO_EVENT;			
-			return;
 		}
 		if(status != PLAYING)
 		{
