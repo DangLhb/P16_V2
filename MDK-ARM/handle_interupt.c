@@ -11,6 +11,7 @@
 #include <time.h>
 #include "handle_interupt.h"
 #include "ir_remote.h"
+#include "danglhb_rf.h"
 
 
 #define MAX_TIME_RECORD 60
@@ -18,9 +19,9 @@
 #define TIME_GO_TO_SLEEP 2
 uint16_t time_default = 0, time_standy = 0;
 uint32_t pin_control = 0, stt_play = 0, full_record = 0;
-status_loop g_status_loop = LOOP;
-uint8_t g_IR_allow_play = 0;
-uint8_t g_count_loop = 0;
+//status_loop g_status_loop = LOOP;
+//uint8_t g_IR_allow_play = 0;
+//uint8_t g_count_loop = 0;
 
 extern event event_interupt; 
 extern status_t status;
@@ -32,11 +33,6 @@ extern uint8_t timer_standby;
 uint8_t g_random_count = 0;
 uint8_t c_random_cacula[100] = {3,2,1,5,1,1,4,2,5,2,4,1,1,2,3,2,4,3,5,1,4,2,
 	3,5,1,2,3,1,4,3,2,1,5,1,1,4,2,5,2,4,1,1,2,5,1,2,3,1,4,3,2,1,2,3,2,4,3,5,1,4,2};
-// ham random
-uint32_t GetRandom(int min,int max){
-    return min + (int)(rand()*(max-min+1.0)/(1.0+RAND_MAX));
-}
-
 
 void handel_no_event(void)
 {
@@ -59,68 +55,6 @@ void handel_no_event(void)
 		HAL_UART_Transmit(&huart1, (uint8_t *)"TIME-OUT-enter standby", sizeof("TIME-OUT-enter standby"), HAL_MAX_DELAY);
 		Enter_Standby_Mode();	
 	}
-	
-	if(g_status_loop == LOOP && status == NONE && g_IR_allow_play == 1)
-	{
-		HAL_Delay(100);
-		HAL_UART_Transmit(&huart1, (uint8_t *)"DangLHB- LOOP - BACK EVENT", sizeof("DangLHB- enter BACK_EVENT"), HAL_MAX_DELAY);
-		//event_interupt = BACK_EVENT;
-			Handle_Back_Button_Event();	
-		g_count_loop +=1;
-		if(full_record == 1)
-		{
-			if(g_count_loop == 5)
-			{
-				g_IR_allow_play = 0;
-				g_count_loop = 0;
-			}
-		}
-		else if(full_record == 0)
-		{
-			if(g_count_loop == stt_play)
-			{
-				g_IR_allow_play = 0;
-				g_count_loop = 0;
-			}
-		}
-		
-	}
-	else if(g_status_loop ==  RANDOM && status == NONE && g_IR_allow_play == 1)
-	{
-		HAL_Delay(100);
-		HAL_UART_Transmit(&huart1, (uint8_t *)"DangLHB- RANDOM", sizeof("DangLHB- enter BACK_EVENT"), HAL_MAX_DELAY);
-		//srand((unsigned int)time(NULL));
-		if(full_record == 1)
-		{
-			g_random_count += 1;
-			if(g_random_count > 59)
-				g_random_count = 0;
-			stt_play = c_random_cacula[g_random_count];
-			//stt_play = GetRandom(1,5);
-			sprintf(msg, "\n stt_play = %d", stt_play);
-			HAL_UART_Transmit(&huart1, (uint8_t *)msg, strlen(msg), HAL_MAX_DELAY);
-			Start_play();
-		}
-		else if(full_record == 0)
-		{
-			if(pin_control > 0)
-			{
-				g_random_count +=1;
-				if(g_random_count > 59)
-					g_random_count = 0;
-				while(c_random_cacula[g_random_count] > pin_control)
-				{
-					g_random_count +=1;
-				}
-				stt_play = c_random_cacula[g_random_count];
-				sprintf(msg, "\n stt_play 2 = %d", stt_play);
-				HAL_UART_Transmit(&huart1, (uint8_t *)msg, strlen(msg), HAL_MAX_DELAY);
-				Start_play();
-			}
-		}
-		//g_status_loop  = NOTHING;
-		g_IR_allow_play = 0;
-	}
 }
 
 
@@ -131,54 +65,42 @@ void HAL_GPIO_EXTI_Callback(uint16_t button)
 	{		
 		switch(button)
 		{
-
-			case GPIO_PIN_12:	//BACK
-//				event_interupt = BACK_EVENT;
-//				HAL_UART_Transmit(&huart1, (uint8_t *)"interrupt-back_press = 1       ", 31, HAL_MAX_DELAY);
-				event_interupt = LOOP_RANDOM_EVENT;			// DangLHb modify
-				HAL_UART_Transmit(&huart1, (uint8_t *)"interrupt-loop_back_press = 1       ", 36, HAL_MAX_DELAY);
-			break;
+//			case GPIO_PIN_12:	//BACK
+//				event_interupt = LOOP_RANDOM_EVENT;			// DangLHb modify
+//				HAL_UART_Transmit(&huart1, (uint8_t *)"interrupt-loop_back_press = 1       ", 36, HAL_MAX_DELAY);
+//			break;
 			
 			case GPIO_PIN_15:	//PLAY  
 				event_interupt = PLAY_EVENT;
-				//g_status_loop  = NOTHING;
-			g_IR_allow_play = 0;
 				HAL_UART_Transmit(&huart1, (uint8_t *)"interrupt-play_press = 1       ", 31, HAL_MAX_DELAY);				
 			break;
 			
 			case GPIO_PIN_11:	//RECORD
 				event_interupt = RECORD_EVENT;
-				//g_status_loop  = NOTHING;
-				g_IR_allow_play = 0;
 				HAL_UART_Transmit(&huart1, (uint8_t *)"interrupt-record_press = 1     ", 31, HAL_MAX_DELAY);							
 			break;
 			
-			case GPIO_PIN_5:	//IR        			
-				if(!encode_ir(HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_5)))
+			case GPIO_PIN_0:	//IR -> RF        			
+				if(!encode_rf(HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0)))
 				{
-					uint32_t data_ir = get_result_ir();
+					uint32_t data_rf = get_result_rf();
 					HAL_UART_Transmit(&huart1, (uint8_t *)"---------------------", 21, HAL_MAX_DELAY);
 					char msg[59];
-					sprintf(msg, "\n data_ir = %x",data_ir );
+					sprintf(msg, "\n data_ir = %x",data_rf );
 					HAL_UART_Transmit(&huart1, (uint8_t *)msg, strlen(msg), HAL_MAX_DELAY);
-					if((data_ir == 0xff02fd) /*|| (is_button)*/)
+					if((data_rf == 0xff02fd))	// can doc log xem data la gi?
 					{
 						HAL_UART_Transmit(&huart1, (uint8_t *)"get_result_ir", 14, HAL_MAX_DELAY);
-						data_ir = 0;
-						//	is_button = 0;
-						//HAL_Delay(100);
-						event_interupt = IR_EVENT;
+						data_rf = 0;
+						event_interupt = RF_EVENT;
 					}
 				}				
 			break;
-			case GPIO_PIN_4:
-				HAL_UART_Transmit(&huart1, (uint8_t *)"button- poweroff", sizeof("button- poweroff"), HAL_MAX_DELAY);	
-				//event_interupt = IR_EVENT;
-			//Enter_Standby_Mode();
-				event_interupt = POWER_OFF;
-			break;				
+	//		case GPIO_PIN_4:
+	//			HAL_UART_Transmit(&huart1, (uint8_t *)"button- poweroff", sizeof("button- poweroff"), HAL_MAX_DELAY);	
+	//			event_interupt = POWER_OFF;
+	//		break;				
 			default:
-								HAL_UART_Transmit(&huart1, (uint8_t *)"ir0", 3, HAL_MAX_DELAY);
 			break;		
 		}			
 	}
@@ -213,16 +135,15 @@ void Handle_Timer_2_Interupt(void)
 	}
 	
 
-	//char msg[59];
-	//sprintf(msg, "\n time_standy = %d, ",time_standy);
-	//HAL_UART_Transmit(&huart1, (uint8_t *)msg, strlen(msg), HAL_MAX_DELAY);
-	/*
+	char msg[59];
+	sprintf(msg, "\n time_standy = %d, ",time_standy);
+	HAL_UART_Transmit(&huart1, (uint8_t *)msg, strlen(msg), HAL_MAX_DELAY);
+
 	if(time_standy == TIME_GO_TO_STANDBY)
 	{
 		HAL_UART_Transmit(&huart1, (uint8_t *)"Time out- Enter standby   ", 26, HAL_MAX_DELAY);		
 		Enter_Standby_Mode();
 	}
-	*/
 	//event_interupt = NO_EVENT;
 }
 
@@ -323,7 +244,7 @@ void Handle_Play_Button_Event(void)
 			event_interupt = NO_EVENT;
 }
 
-
+/*
 //Ham xu li khi co su kien bam nut Back
 void Handle_Back_Button_Event(void)
 {
@@ -360,8 +281,8 @@ void Handle_Back_Button_Event(void)
 	HAL_Delay(500);	
 	event_interupt = NO_EVENT;
 }
-
-
+*/
+/*
 //Ham xu li nut LOOP_RANDOM_RANDOM
 uint8_t g_set_status_loop_random = 1;
 void Handle_loop_random_Button_Event(void)
@@ -392,7 +313,8 @@ void Handle_loop_random_Button_Event(void)
 	}
 	event_interupt = NO_EVENT;
 }
-
+*/
+/*
 void Hanlde_IR_event(void)
 {
 	g_IR_allow_play = 1;
@@ -408,6 +330,7 @@ void Hanlde_IR_event(void)
 	handel_no_event();	
 	//event_interupt = NO_EVENT;
 }
+*/
 void handle_event(event even_t)
 {
 	//HAL_UART_Transmit(&huart1, (uint8_t *)"handle_event", 12, HAL_MAX_DELAY);
@@ -416,43 +339,40 @@ void handle_event(event even_t)
 		case NO_EVENT:
 		// check status
 		// enter sleep
-			//HAL_UART_Transmit(&huart1, (uint8_t *)"NO_EVENT     ", 12, HAL_MAX_DELAY);
 			handel_no_event();
-		
 		break;
 		case RECORD_EVENT:
 			HAL_UART_Transmit(&huart1, (uint8_t *)"RECORD_EVENT", 12, HAL_MAX_DELAY);
 			Handle_Record_Button_Event();
 		break;
-		case BACK_EVENT:
-			HAL_UART_Transmit(&huart1, (uint8_t *)"BACK_EVENT", 10, HAL_MAX_DELAY);
-			Handle_Back_Button_Event();
-		break;
-		case LOOP_RANDOM_EVENT:
-			HAL_UART_Transmit(&huart1, (uint8_t *)"LOOP_RANDOM_EVENT", 17, HAL_MAX_DELAY);
-			Handle_loop_random_Button_Event();
-		break;
+//		case BACK_EVENT:
+//			HAL_UART_Transmit(&huart1, (uint8_t *)"BACK_EVENT", 10, HAL_MAX_DELAY);
+//			Handle_Back_Button_Event();
+//		break;
+//		case LOOP_RANDOM_EVENT:
+//			HAL_UART_Transmit(&huart1, (uint8_t *)"LOOP_RANDOM_EVENT", 17, HAL_MAX_DELAY);
+//			Handle_loop_random_Button_Event();
+//		break;
 		case PLAY_EVENT:
 			HAL_UART_Transmit(&huart1, (uint8_t *)"PLAY_EVENT", 10, HAL_MAX_DELAY);
 			Handle_Play_Button_Event();
 		break;
-		case IR_EVENT:
-			HAL_UART_Transmit(&huart1, (uint8_t *)"IR_EVENT", 8, HAL_MAX_DELAY);
+//		case IR_EVENT:
+//			HAL_UART_Transmit(&huart1, (uint8_t *)"IR_EVENT", 8, HAL_MAX_DELAY);
 			//HAL_Delay(100);
 		
-			if(stt_play !=0)
-				stt_play = pin_control +1; 
-			Hanlde_IR_event();
-			HAL_Delay(1500);
-			event_interupt = NO_EVENT;
+//			if(stt_play !=0)
+//				stt_play = pin_control +1; 
+//			Hanlde_IR_event();
+//			HAL_Delay(1500);
+//			event_interupt = NO_EVENT;
 			//Enter_Standby_Mode();
 			
-		break;
-		case POWER_OFF:
-			Enter_Standby_Mode();
-			break;
+//		break;
+//		case POWER_OFF:
+//			Enter_Standby_Mode();
+//			break;
 		default:
 		break;
 	}
-		
 }
