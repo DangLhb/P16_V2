@@ -20,12 +20,12 @@ void resest_flash (void)
 	time_record_4 = 0;
 	time_record_5 = 0;
 	
-	write_flash(&pin_control, PIN_CONTROL_T, (sizeof(pin_control)/4));
-	HAL_Delay(100);
-	write_flash(&full_record, FULL_RECORD, (sizeof(full_record)/4));
-	HAL_Delay(100);
-	write_flash(&stt_play, STT_PLAY_T, (sizeof(stt_play)/4));			
-	HAL_Delay(100);			
+	//write_flash(&pin_control, PIN_CONTROL_T, (sizeof(pin_control)/4));
+//	HAL_Delay(100);
+	//write_flash(&full_record, FULL_RECORD, (sizeof(full_record)/4));
+	//HAL_Delay(100);
+//	write_flash(&stt_play, STT_PLAY_T, (sizeof(stt_play)/4));			
+	//HAL_Delay(100);			
 	write_flash(&time_record_1, TIME_RECORD_1, (sizeof(time_record_1)/4));
 	HAL_Delay(100);			
 	write_flash(&time_record_2, TIME_RECORD_2, (sizeof(time_record_1)/4));
@@ -39,15 +39,15 @@ void resest_flash (void)
 
 void read_variable_from_flash(void)
 {
-	read_flash(&stt_play, STT_PLAY_T);
-	HAL_Delay(10);
-	read_flash(&pin_control, PIN_CONTROL_T);
-	HAL_Delay(10);
-	read_flash(&full_record, FULL_RECORD);
-	HAL_Delay(10);
-	char msg[59];
-	sprintf(msg, "\n stt_play = %d, pin_control =%d, full_record = %d",stt_play,pin_control,full_record );
-	HAL_UART_Transmit(&huart1, (uint8_t *)msg, strlen(msg), HAL_MAX_DELAY);
+//	read_flash(&stt_play, STT_PLAY_T);
+	//HAL_Delay(10);
+	//read_flash(&pin_control, PIN_CONTROL_T);
+	//HAL_Delay(10);
+	//read_flash(&full_record, FULL_RECORD);
+	//HAL_Delay(10);
+//	char msg[59];
+	//sprintf(msg, "\n stt_play = %d, pin_control =%d, full_record = %d",stt_play,pin_control,full_record );
+//	HAL_UART_Transmit(&huart1, (uint8_t *)msg, strlen(msg), HAL_MAX_DELAY);
 
 	read_flash(&time_record_1, TIME_RECORD_1);
 	HAL_Delay(10);
@@ -137,6 +137,9 @@ uint32_t init_flash_memory(void)
 	num_block = flash_memory[0] >> 16;
 	num_data = flash_memory[0];
 			char msg[59];
+	
+	//Flash_Write_Data(FLASH_USER_START_ADDR, &none_data, 1);
+	//return 0;
 
 	if(num_data == num_block)
 	{
@@ -149,8 +152,8 @@ uint32_t init_flash_memory(void)
 		Flash_Read_Data(FLASH_USER_START_ADDR, flash_memory, (num_data+1));
 		for(i = 0;i < num_block;i++)
 	  {
-//	sprintf(msg, "\n num_data = %d ,num_block =%d",num_data,num_block);
-//	HAL_UART_Transmit(&huart1, (uint8_t *)msg, strlen(msg), HAL_MAX_DELAY);
+	sprintf(msg, "\n num_data = %d ,num_block =%d",num_data,num_block);
+	HAL_UART_Transmit(&huart1, (uint8_t *)msg, strlen(msg), HAL_MAX_DELAY);
 		  typeOfBlock = *ptr >> 16;
 		  lenOfBlock = *ptr;
 		  num_data -= (lenOfBlock+1);
@@ -165,6 +168,10 @@ uint32_t init_flash_memory(void)
 			Flash_Write_Data(FLASH_USER_START_ADDR, flash_memory, (num_data + 1));
 			return 0;
 		}
+		//else {
+			//Flash_Write_Data(FLASH_USER_START_ADDR, &none_data, 1);
+			//return 1;
+		//}
 	}
 	Flash_Write_Data(FLASH_USER_START_ADDR, &none_data, 1);
 		
