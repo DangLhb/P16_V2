@@ -1,10 +1,15 @@
 #include "danglhb_rf.h"
 #include <stdint.h>
-#include "main.h"
+#include "handle_interupt.h"
+#include "stdio.h"
+#include "string.h"
 
 
 // uint32_t data_ir_remote = 0;
 uint32_t data_rf_remote = 0;
+
+extern event event_interupt; 
+extern UART_HandleTypeDef huart1;
 
 
 
@@ -42,48 +47,50 @@ static void Delay_us(uint32_t us)
 
 uint8_t encode_rf(uint8_t state)
 {
+	//event_interupt = DANGLHB;
 	uint32_t count = 0, data = 0;
 	uint8_t lock = 0;
 	if(lock == 1 || state != 0)
 		return 1;
 	lock = 1;
-	while (HAL_GPIO_ReadPin (GPIOA, GPIO_PIN_5));   // wait for the pin to go low
 	
-		count = 0;
-    while (!(HAL_GPIO_ReadPin (GPIOA, GPIO_PIN_5)))  // wait for the pin to go high  9,8 ms LOW
+	//	count = 0;
+	    //while ((HAL_GPIO_ReadPin (GPIOA, GPIO_PIN_0)));
+
+    while (!(HAL_GPIO_ReadPin (GPIOA, GPIO_PIN_0)))  // wait for the pin to go high  9,8 ms LOW
 		{
+		//	if(count < 200)
+			//{
 			count++;
-      Delay_us(100);
+      Delay_us(1);
+			//}else break;
 		}
-		if(count > 70)
+		if(count > 40)
 		{
-			// while (HAL_GPIO_ReadPin (GPIOA, GPIO_PIN_5));   // wait for the pin to go low
       for (int i=0; i<25; i++)
       {
                 count=0;
-                  // while (!(HAL_GPIO_ReadPin (GPIOA, GPIO_PIN_5))); // wait for pin to go high.. this is 562.5us LOW
-                	while ((HAL_GPIO_ReadPin (GPIOA, GPIO_PIN_5))); // wait for pin to go low..
+                	while ((HAL_GPIO_ReadPin (GPIOA, GPIO_PIN_0))); // wait for pin to go low..
 
-                  // while ((HAL_GPIO_ReadPin (GPIOA, GPIO_PIN_5)))  // count the space length while the pin is high
-                  while (!(HAL_GPIO_ReadPin (GPIOA, GPIO_PIN_5)))  // count the space length while the pin is low
+                  // while ((HAL_GPIO_ReadPin (GPIOA, GPIO_PIN_0)))  // count the space length while the pin is high
+                  while (!(HAL_GPIO_ReadPin (GPIOA, GPIO_PIN_0)))  // count the space length while the pin is low
                  {
-                  count++;
-                  Delay_us(100);
+										count++;
+										Delay_us(1);
                  }
 
-                 if (count > 5) // if the space is more than 0.5ms, reality is  0.9 ms
+                 if (count > 40) // if the space is more than 1ms, reality is  ~ 1.2 ms
                  {
-                  data |= (1UL << (24-i));   // write 1
+										data |= (1UL << (24-i));   // write 1
                  }
 
-                 else data &= ~(1UL << (24-i));  // write 0
+                 else if(count < 40)
+									 data &= ~(1UL << (24-i));  // write 0;
+								 else break;
       }
 		  data_rf_remote = data;
-			Delay_us(100);
-		  lock = 0;
 			return 0;
 		}
-		lock = 0;
 		return 1;
 }
 
