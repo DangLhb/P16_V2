@@ -18,7 +18,8 @@ typedef enum
 	SLEEP_EVENT,
 	LOOP_RANDOM_EVENT,
 	POWER_OFF,
-	RF_EVENT
+	RF_EVENT,
+	DANGLHB
 }event;
 typedef enum
 {
@@ -34,7 +35,6 @@ void Handle_Play_Button_Event(void);
 void Handle_Back_Button_Event(void);
 void Enter_Standby_Mode(void);
 void Handle_Timer_2_Interupt(void);
-
-
+void Handle_Timer_4_Interupt(void);
 
 #endif
