@@ -15,6 +15,7 @@ extern uint16_t time_default, time_standy;
 extern uint8_t is_reset;
 extern uint8_t lock_interupt;
 extern uint32_t pin_control, stt_play;
+uint8_t g_allow_toggle_led = 0;
 uint8_t g_random_count = 0;
 uint8_t c_random_cacula[100] = {3,2,1,5,1,1,4,2,5,2,4,1,1,2,3,2,4,3,5,1,4,2,
 	3,5,1,2,3,1,4,3,2,1,5,1,1,4,2,5,2,4,1,1,2,5,1,2,3,1,4,3,2,1,2,3,2,4,3,5,1,4,2};
@@ -130,13 +131,23 @@ uint32_t stt_play_to_time_record (uint32_t stt_play_t)
 //ham start record
 void Start_record(void)
 {
-			HAL_UART_Transmit(&huart1, (uint8_t *)"Enter Start_record   ", 21, HAL_MAX_DELAY);
+			//HAL_GPIO_WritePin(GPIOB,GPIO_PIN_13,GPIO_PIN_RESET);
+			char msg[59];
+			sprintf(msg, "\n Enter Start_record   ");
+			HAL_UART_Transmit(&huart1, (uint8_t *)msg, strlen(msg), HAL_MAX_DELAY);	
 			HAL_GPIO_WritePin(GPIOA,GPIO_PIN_1, GPIO_PIN_RESET);	// REC = 0 - switch to record mode
 			HAL_UART_Transmit(&huart1, (uint8_t *)"Start_record - REC = 0   ", 25, HAL_MAX_DELAY);
 			set_record_to_record(read_switch_mode());		//set pin_control
+			sprintf(msg, "\n Start -record -  read_switch_mode = %d, pin_contrl = %d ",read_switch_mode(), pin_control);
+			HAL_UART_Transmit(&huart1, (uint8_t *)msg, strlen(msg), HAL_MAX_DELAY);
+			if(pin_control == 10)
+				return;
+			sprintf(msg, "\n Start -record -  pin_control = %d, stt_play = %d ",pin_control,stt_play);
+			HAL_UART_Transmit(&huart1, (uint8_t *)msg, strlen(msg), HAL_MAX_DELAY);
 			Convert_pin_control_or_stt_play_to_pin(pin_control,0);
 			time_default = 0;
 			time_standy = 0;
+			g_allow_toggle_led = 1;
 			status = RECORDING;
 			HAL_Delay(1000);
 }
@@ -144,7 +155,10 @@ void Start_record(void)
 //ham stop record
 void Stop_record(void)
 {
-			//uint32_t read =0;
+			//HAL_GPIO_WritePin(GPIOB,GPIO_PIN_13,GPIO_PIN_SET);
+			char msg[59];	
+			sprintf(msg, "\n Stop - record - pin_control = %d, stt_play = %d ",pin_control,stt_play);
+			HAL_UART_Transmit(&huart1, (uint8_t *)msg, strlen(msg), HAL_MAX_DELAY);
 			Convert_pin_control_or_stt_play_to_pin(pin_control,1);
 			convert_pin_control_to_time_record(pin_control);
 			//stt_play = pin_control + 1;
@@ -171,8 +185,13 @@ void Stop_record(void)
 //ham start play
 void Start_play(void)
 {
-	HAL_UART_Transmit(&huart1, (uint8_t *)"Enter Start_play - REC =1     ", 30, HAL_MAX_DELAY);
+	//HAL_GPIO_WritePin(GPIOB,GPIO_PIN_13,GPIO_PIN_RESET);
+	char msg[59];	
+	sprintf(msg, "\n Enter Start_play - REC =1 ");
+	HAL_UART_Transmit(&huart1, (uint8_t *)msg, strlen(msg), HAL_MAX_DELAY);
 	set_record_to_play(read_switch_mode());		//set stt_play
+	sprintf(msg, "\n Start_play - pin_control = %d, stt_play = %d ",pin_control,stt_play);
+	HAL_UART_Transmit(&huart1, (uint8_t *)msg, strlen(msg), HAL_MAX_DELAY);
 	if(stt_play == 0)
 	{
 		status = NONE;
@@ -193,31 +212,35 @@ void Start_play(void)
 //ham dung play
 void Stop_play(void)
 {
-	HAL_UART_Transmit(&huart1, (uint8_t *)"Enter Stop_play      ", 22, HAL_MAX_DELAY);	
+	//HAL_GPIO_WritePin(GPIOB,GPIO_PIN_13,GPIO_PIN_SET);
+	char msg[60];
+	sprintf(msg, "\n Enter Stop_play       ");
+	HAL_UART_Transmit(&huart1, (uint8_t *)msg, strlen(msg), HAL_MAX_DELAY);
 	Convert_pin_control_or_stt_play_to_pin(stt_play - 1,0);
 	HAL_Delay(10);
   Convert_pin_control_or_stt_play_to_pin(stt_play - 1,1);
 	status = STOPPLAY;
 	time_default = 0;
 	time_standy = 0;
-	HAL_Delay(10);	
+	//HAL_Delay(10);	
 }
 
 //doc trang thai thanh switch
 uint32_t read_switch_mode(void)
 {
 	//HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_5
-	if(!HAL_GPIO_ReadPin (GPIOB, GPIO_PIN_4))
+	
+	if(HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_9))
 		return 1;
-	else if(!HAL_GPIO_ReadPin (GPIOB, GPIO_PIN_5))
+	else if(HAL_GPIO_ReadPin (GPIOB, GPIO_PIN_8))
 		return 2;
-	else if(!HAL_GPIO_ReadPin (GPIOB, GPIO_PIN_6))
+	else if(HAL_GPIO_ReadPin (GPIOB, GPIO_PIN_7))
 		return 3;
-	else if(!HAL_GPIO_ReadPin (GPIOB, GPIO_PIN_7))
+	else if(HAL_GPIO_ReadPin (GPIOB, GPIO_PIN_6))
 		return 4;
-	else if(!HAL_GPIO_ReadPin (GPIOB, GPIO_PIN_8))
+	else if(HAL_GPIO_ReadPin (GPIOB, GPIO_PIN_5))
 		return 5;
-	else if(!HAL_GPIO_ReadPin (GPIOB, GPIO_PIN_9))
+	else if(HAL_GPIO_ReadPin (GPIOB, GPIO_PIN_4))
 		return 6;
 	else return 7;
 }
@@ -225,8 +248,10 @@ uint32_t read_switch_mode(void)
 //set stt_play tu thanh switch
 void set_record_to_play(uint32_t switch_mode)
 {
-	//char msg[59];
+	char msg[59];
 	uint16_t is_list_empty = 1;
+	sprintf(msg, "\n  DangLHb - enter set_record_to_play - switch_mode = %d", switch_mode);
+	HAL_UART_Transmit(&huart1, (uint8_t *)msg, strlen(msg), HAL_MAX_DELAY);
 	switch(switch_mode)
 	{
 		case 1:
@@ -273,6 +298,8 @@ void set_record_to_play(uint32_t switch_mode)
 		default:
 		break;
 	}
+	sprintf(msg, "\n  DangLHb - enter set_record_to_play - stt_play = %d", stt_play);
+	HAL_UART_Transmit(&huart1, (uint8_t *)msg, strlen(msg), HAL_MAX_DELAY);
 }
 //set pin_control tu thanh switch
 void set_record_to_record(uint32_t switch_mode)
@@ -296,6 +323,7 @@ void set_record_to_record(uint32_t switch_mode)
 		break;
 		case 6:
 			// can hoi lai kich ban de xu li
+			pin_control = 10;
 		break;
 		case 7:
 		break;
