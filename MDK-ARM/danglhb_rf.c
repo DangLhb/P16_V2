@@ -7,6 +7,7 @@
 
 // uint32_t data_ir_remote = 0;
 uint32_t data_rf_remote = 0;
+uint8_t lock = 0;
 
 extern event event_interupt; 
 extern UART_HandleTypeDef huart1;
@@ -48,46 +49,46 @@ static void Delay_us(uint32_t us)
 uint8_t encode_rf(uint8_t state)
 {
 	//event_interupt = DANGLHB;
-	uint32_t count = 0, data = 0;
-	uint8_t lock = 0;
-	if(lock == 1 || state != 0)
-		return 1;
-	lock = 1;
-	
-	//	count = 0;
+	uint32_t count = 0, data = 0,count_2 =0;
+	//	char msg[14];
 	    //while ((HAL_GPIO_ReadPin (GPIOA, GPIO_PIN_0)));
 
-    while (!(HAL_GPIO_ReadPin (GPIOA, GPIO_PIN_0)))  // wait for the pin to go high  9,8 ms LOW
+    while (!(HAL_GPIO_ReadPin (GPIOA, GPIO_PIN_0)) && count <200)  // wait for the pin to go high  9,8 ms LOW
 		{
-		//	if(count < 200)
-			//{
 			count++;
       Delay_us(1);
-			//}else break;
 		}
-		if(count > 40)
+									//sprintf(msg, "\ncount=%d",count);
+									//HAL_UART_Transmit(&huart1, (uint8_t *)msg, strlen(msg), HAL_MAX_DELAY);
+		if(count > 50)
 		{
       for (int i=0; i<25; i++)
       {
                 count=0;
-                	while ((HAL_GPIO_ReadPin (GPIOA, GPIO_PIN_0))); // wait for pin to go low..
+								count_2 = 0;
 
                   // while ((HAL_GPIO_ReadPin (GPIOA, GPIO_PIN_0)))  // count the space length while the pin is high
-                  while (!(HAL_GPIO_ReadPin (GPIOA, GPIO_PIN_0)))  // count the space length while the pin is low
+                  while ((HAL_GPIO_ReadPin (GPIOA, GPIO_PIN_0)))  // count the space length while the pin is low
                  {
 										count++;
 										Delay_us(1);
                  }
-
-                 if (count > 40) // if the space is more than 1ms, reality is  ~ 1.2 ms
+								 //	sprintf(msg, "\ncount=%d",count);
+									//HAL_UART_Transmit(&huart1, (uint8_t *)msg, strlen(msg), HAL_MAX_DELAY);
+								 
+								 	//while (!(HAL_GPIO_ReadPin (GPIOA, GPIO_PIN_0)) ); // wait for pin to go low..
+						
+                	while (!(HAL_GPIO_ReadPin (GPIOA, GPIO_PIN_0)) && count_2 < 2 ); // wait for pin to go low..
+											count_2 ++;
+                 if (count < 30) // if the space is more than 1ms, reality is  ~ 1.2 ms
                  {
 										data |= (1UL << (24-i));   // write 1
                  }
 
-                 else if(count < 40)
+                 else if(count > 30)
 									 data &= ~(1UL << (24-i));  // write 0;
-								 else break;
       }
+			lock =0;
 		  data_rf_remote = data;
 			return 0;
 		}
