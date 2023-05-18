@@ -50,7 +50,7 @@ uint8_t encode_rf(uint8_t state)
 {
 	//event_interupt = DANGLHB;
 	uint32_t count = 0, data = 0,count_2 =0;
-	//	char msg[14];
+		//char msg[14];
 	    //while ((HAL_GPIO_ReadPin (GPIOA, GPIO_PIN_0)));
 
     while (!(HAL_GPIO_ReadPin (GPIOA, GPIO_PIN_0)) && count <200)  // wait for the pin to go high  9,8 ms LOW
@@ -77,18 +77,22 @@ uint8_t encode_rf(uint8_t state)
 									//HAL_UART_Transmit(&huart1, (uint8_t *)msg, strlen(msg), HAL_MAX_DELAY);
 								 
 								 	//while (!(HAL_GPIO_ReadPin (GPIOA, GPIO_PIN_0)) ); // wait for pin to go low..
-						
-                	while (!(HAL_GPIO_ReadPin (GPIOA, GPIO_PIN_0)) && count_2 < 2 ); // wait for pin to go low..
-											count_2 ++;
-                 if (count < 30) // if the space is more than 1ms, reality is  ~ 1.2 ms
+						     if (count < 30) // if the space is more than 1ms, reality is  ~ 1.2 ms
                  {
 										data |= (1UL << (24-i));   // write 1
                  }
-
-                 else if(count > 30)
+                 else /*if(count >= 30)*/
 									 data &= ~(1UL << (24-i));  // write 0;
+								 
+                	while (!(HAL_GPIO_ReadPin (GPIOA, GPIO_PIN_0)) && count_2 < 150) // wait for pin to go low..
+									{
+											count_2++;
+										Delay_us(10);
+									}
+									//sprintf(msg, "\ncount=%d",count_2);
+									//HAL_UART_Transmit(&huart1, (uint8_t *)msg, strlen(msg), HAL_MAX_DELAY);
       }
-			lock =0;
+			//lock =0;
 		  data_rf_remote = data;
 			return 0;
 		}
