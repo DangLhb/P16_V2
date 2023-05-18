@@ -32,6 +32,7 @@ extern TIM_HandleTypeDef htim3;
 extern uint8_t interupt_timer_3;
 extern uint8_t timer_standby;
 extern uint8_t g_allow_toggle_led;
+extern uint8_t lock;
 
 void handel_no_event(void)
 {
@@ -58,8 +59,11 @@ void handel_no_event(void)
 		//HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_12);
 		//HAL_Delay(1000);
 	}
+	if(status == NONE)
+			HAL_GPIO_WritePin(GPIOA,GPIO_PIN_8,GPIO_PIN_RESET);		//standby ic audio	
 	if(timer_standby == 3)
 	{
+				HAL_GPIO_WritePin(GPIOB,GPIO_PIN_13,GPIO_PIN_RESET);	//tat nguon rf
 		//HAL_UART_Transmit(&huart1, (uint8_t *)"TIME-OUT-enter standby", sizeof("TIME-OUT-enter standby"), HAL_MAX_DELAY);
 		Enter_Standby_Mode();	
 	}
@@ -79,29 +83,33 @@ void HAL_GPIO_EXTI_Callback(uint16_t button)
 //				HAL_UART_Transmit(&huart1, (uint8_t *)"interrupt-loop_back_press = 1       ", 36, HAL_MAX_DELAY);
 //			break;
 			case GPIO_PIN_0:	//IR -> RF
-				//event_interupt = DANGLHB;
 				if(!encode_rf(HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0)))
 				{
 					uint32_t data_rf = get_result_rf();
 					char msg[59];
 					sprintf(msg, "\n data_rf = %x",data_rf );
 					HAL_UART_Transmit(&huart1, (uint8_t *)msg, strlen(msg), HAL_MAX_DELAY);
-					if((data_rf == 0x1c5f35e || data_rf == 0x1dc5f35 || data_rf == 0x18be6bd))	// can doc log xem data la gi? - TH khac 3ffffff
+					if(data_rf == 0x1c5f35e || data_rf == 0x1dc5f35 || data_rf == 0x18be6bd || data_rf == 0x15ee2f9 || data_rf == 0x1dc5f35 || data_rf == 0x1000f15 || data_rf == 0x1c4801a || data_rf == 0xc50dbd || data_rf == 0x16286de)	// can doc log xem data la gi? - TH khac 3ffffff
 					{
 						event_interupt = RF_EVENT;
 						data_rf = 0;
+						lock = 0;
 					}
 				}
-				HAL_UART_Transmit(&huart1, (uint8_t *)"(-.-)", sizeof("(-.-)"), HAL_MAX_DELAY);
+				timer_standby = 0;
+				//else lock = 0;
+				//HAL_UART_Transmit(&huart1, (uint8_t *)"(-.-)", sizeof("(-.-)"), HAL_MAX_DELAY);
 			break;
 			
 			case GPIO_PIN_15:	//PLAY  
 				event_interupt = PLAY_EVENT;
+					HAL_GPIO_WritePin(GPIOA,GPIO_PIN_8,GPIO_PIN_SET);
 				HAL_UART_Transmit(&huart1, (uint8_t *)"interrupt-play_press = 1       ", 31, HAL_MAX_DELAY);				
 			break;
 			
 			case GPIO_PIN_11:	//RECORD
 				event_interupt = RECORD_EVENT;
+					HAL_GPIO_WritePin(GPIOA,GPIO_PIN_8,GPIO_PIN_SET);
 				HAL_UART_Transmit(&huart1, (uint8_t *)"interrupt-record_press = 1     ", 31, HAL_MAX_DELAY);							
 			break;
 			
@@ -143,7 +151,8 @@ void Handle_Timer_2_Interupt(void)
 		//Stop_play();
 		event_interupt = PLAY_EVENT;
 	}
-	
+	//if(timer_standby == 4)
+		//lock = 0;
 
 	char msg[59];
 	sprintf(msg, "\n time_standy = %d, ",time_standy);
@@ -232,6 +241,7 @@ void Enter_Standby_Mode(void)
 //Ham xu li khi co su kien bam nut RECORD
 void Handle_Record_Button_Event(void)
 {
+	HAL_GPIO_WritePin(GPIOA,GPIO_PIN_8,GPIO_PIN_SET);
 	if(status == PLAYING)
 	{
 		HAL_UART_Transmit(&huart1, (uint8_t *)"Handle_Record_Button_Event - enter stop play      ", 50, HAL_MAX_DELAY);
@@ -255,7 +265,7 @@ void Handle_Record_Button_Event(void)
 //Ham xu li khi co su kien bam nut Play
 void Handle_Play_Button_Event(void)
 {
-	
+		HAL_GPIO_WritePin(GPIOA,GPIO_PIN_8,GPIO_PIN_SET);
 		HAL_UART_Transmit(&huart1, (uint8_t *)"Handle_Play_Button_Event - stt_play     ", 40, HAL_MAX_DELAY);
 		if(status == RECORDING)
 		{
@@ -283,7 +293,7 @@ void handle_event(event even_t)
 		// enter sleep
 			handel_no_event();
 		break;
-		case RECORD_EVENT:
+    case RECORD_EVENT:
 			HAL_UART_Transmit(&huart1, (uint8_t *)"RECORD_EVENT", 12, HAL_MAX_DELAY);
 			Handle_Record_Button_Event();
 		break;
@@ -292,6 +302,7 @@ void handle_event(event even_t)
 			Handle_Play_Button_Event();
 		break;
 		case RF_EVENT:
+					HAL_GPIO_WritePin(GPIOA,GPIO_PIN_8,GPIO_PIN_SET);
 			HAL_UART_Transmit(&huart1, (uint8_t *)"handele RF_EVENT", sizeof("handele RF_EVENT"), HAL_MAX_DELAY);
 			Handle_Play_Button_Event();
 			//HAL_Delay(1500);
