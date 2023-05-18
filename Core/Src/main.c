@@ -163,9 +163,7 @@ int main(void)
 		HAL_TIM_Base_Start_IT(&htim4);
 		HAL_UART_Transmit(&huart1, (uint8_t *)"Init---", sizeof("Init---"), HAL_MAX_DELAY);		
 		HAL_GPIO_WritePin(GPIOB,GPIO_PIN_13,GPIO_PIN_SET);	//bat nguon rf
-				//HAL_Delay(100);
-		//HAL_TIM_Base_Stop_IT(&htim3);
-		//event_interupt = PLAY_EVENT;
+
 /***************************************************************************/
   /* USER CODE END 2 */
 
@@ -464,7 +462,7 @@ static void MX_GPIO_Init(void)
   HAL_NVIC_SetPriority(EXTI0_IRQn, 1, 0);
   HAL_NVIC_EnableIRQ(EXTI0_IRQn);
 
-  HAL_NVIC_SetPriority(EXTI15_10_IRQn, 2, 0);
+  HAL_NVIC_SetPriority(EXTI15_10_IRQn, 3, 0);
   HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
 
 }
