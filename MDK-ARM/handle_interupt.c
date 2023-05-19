@@ -59,9 +59,9 @@ void handel_no_event(void)
 		//HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_12);
 		//HAL_Delay(1000);
 	}
-	if(status == NONE)
-			HAL_GPIO_WritePin(GPIOA,GPIO_PIN_8,GPIO_PIN_RESET);		//standby ic audio	
-	if(timer_standby == 3)
+	//if(status == NONE)
+//			HAL_GPIO_WritePin(GPIOA,GPIO_PIN_8,GPIO_PIN_RESET);		//standby ic audio	
+	if(timer_standby == 5)
 	{
 				HAL_GPIO_WritePin(GPIOB,GPIO_PIN_13,GPIO_PIN_RESET);	//tat nguon rf
 		//HAL_UART_Transmit(&huart1, (uint8_t *)"TIME-OUT-enter standby", sizeof("TIME-OUT-enter standby"), HAL_MAX_DELAY);
