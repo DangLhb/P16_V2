@@ -109,6 +109,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t button)
 			
 			case GPIO_PIN_11:	//RECORD
 				event_interupt = RECORD_EVENT;
+				HAL_GPIO_WritePin(GPIOB,GPIO_PIN_11,GPIO_PIN_SET);		
 				HAL_UART_Transmit(&huart1, (uint8_t *)"interrupt-record_press = 1     ", 31, HAL_MAX_DELAY);							
 			break;
 			
@@ -291,6 +292,7 @@ void handle_event(event even_t)
 			handel_no_event();
 		break;
     case RECORD_EVENT:
+			HAL_GPIO_WritePin(GPIOB,GPIO_PIN_11,GPIO_PIN_SET);			
 			HAL_UART_Transmit(&huart1, (uint8_t *)"RECORD_EVENT", 12, HAL_MAX_DELAY);
 			Handle_Record_Button_Event();
 		break;
@@ -300,6 +302,7 @@ void handle_event(event even_t)
 			Handle_Play_Button_Event();
 		break;
 		case RF_EVENT:
+			HAL_GPIO_WritePin(GPIOB,GPIO_PIN_11,GPIO_PIN_SET);			
 			HAL_UART_Transmit(&huart1, (uint8_t *)"handele RF_EVENT", sizeof("handele RF_EVENT"), HAL_MAX_DELAY);
 			Handle_Play_Button_Event();
 			//HAL_Delay(1500);
