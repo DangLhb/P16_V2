@@ -59,8 +59,8 @@ void handel_no_event(void)
 		//HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_12);
 		//HAL_Delay(1000);
 	}
-	//if(status == NONE)
-//			HAL_GPIO_WritePin(GPIOA,GPIO_PIN_8,GPIO_PIN_RESET);		//standby ic audio	
+	if(status == NONE)
+			HAL_GPIO_WritePin(GPIOB,GPIO_PIN_11,GPIO_PIN_RESET);		//standby cordex
 	if(timer_standby == 5)
 	{
 				HAL_GPIO_WritePin(GPIOB,GPIO_PIN_13,GPIO_PIN_RESET);	//tat nguon rf
@@ -103,13 +103,12 @@ void HAL_GPIO_EXTI_Callback(uint16_t button)
 			
 			case GPIO_PIN_15:	//PLAY  
 				event_interupt = PLAY_EVENT;
-					HAL_GPIO_WritePin(GPIOA,GPIO_PIN_8,GPIO_PIN_SET);
+				HAL_GPIO_WritePin(GPIOB,GPIO_PIN_11,GPIO_PIN_SET);	
 				HAL_UART_Transmit(&huart1, (uint8_t *)"interrupt-play_press = 1       ", 31, HAL_MAX_DELAY);				
 			break;
 			
 			case GPIO_PIN_11:	//RECORD
 				event_interupt = RECORD_EVENT;
-					HAL_GPIO_WritePin(GPIOA,GPIO_PIN_8,GPIO_PIN_SET);
 				HAL_UART_Transmit(&huart1, (uint8_t *)"interrupt-record_press = 1     ", 31, HAL_MAX_DELAY);							
 			break;
 			
@@ -241,7 +240,6 @@ void Enter_Standby_Mode(void)
 //Ham xu li khi co su kien bam nut RECORD
 void Handle_Record_Button_Event(void)
 {
-	HAL_GPIO_WritePin(GPIOA,GPIO_PIN_8,GPIO_PIN_SET);
 	if(status == PLAYING)
 	{
 		HAL_UART_Transmit(&huart1, (uint8_t *)"Handle_Record_Button_Event - enter stop play      ", 50, HAL_MAX_DELAY);
@@ -265,7 +263,6 @@ void Handle_Record_Button_Event(void)
 //Ham xu li khi co su kien bam nut Play
 void Handle_Play_Button_Event(void)
 {
-		HAL_GPIO_WritePin(GPIOA,GPIO_PIN_8,GPIO_PIN_SET);
 		HAL_UART_Transmit(&huart1, (uint8_t *)"Handle_Play_Button_Event - stt_play     ", 40, HAL_MAX_DELAY);
 		if(status == RECORDING)
 		{
@@ -298,11 +295,11 @@ void handle_event(event even_t)
 			Handle_Record_Button_Event();
 		break;
 		case PLAY_EVENT:
+			HAL_GPIO_WritePin(GPIOB,GPIO_PIN_11,GPIO_PIN_SET);
 			HAL_UART_Transmit(&huart1, (uint8_t *)"PLAY_EVENT", 10, HAL_MAX_DELAY);
 			Handle_Play_Button_Event();
 		break;
 		case RF_EVENT:
-					HAL_GPIO_WritePin(GPIOA,GPIO_PIN_8,GPIO_PIN_SET);
 			HAL_UART_Transmit(&huart1, (uint8_t *)"handele RF_EVENT", sizeof("handele RF_EVENT"), HAL_MAX_DELAY);
 			Handle_Play_Button_Event();
 			//HAL_Delay(1500);
